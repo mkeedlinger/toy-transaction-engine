@@ -21,7 +21,7 @@ You can also output to a another CSV file instead of stdout:
 cargo run --release -- input.csv output.csv
 ```
 
-In the unlikely event other features were ever added, you would be able to see them with using the help flag:
+In the ~~unlikely~~ event other features were ever added, you would be able to see them with using the help flag:
 
 ```
 cargo run --release -- --help

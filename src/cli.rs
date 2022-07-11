@@ -9,6 +9,17 @@ pub struct Args {
 
     /// Defaults to stdout if not set
     pub output_csv: Option<PathBuf>,
+
+    /// The maximum number items in queue for computation per worker thread
+    #[clap(default_value_t = 1_000, short = 'd')]
+    pub queue_depth: usize,
+
+    /// The number of transaction engine worker threads
+    ///
+    /// 0 defaults to the number of threads available on the system.
+    /// A negative number subtracts from the number of available threads (down to a minimum of 1).
+    #[clap(default_value_t = 0, short = 'w')]
+    pub workers: isize,
 }
 
 const INPUT_LONG_ABOUT: &str = r#"

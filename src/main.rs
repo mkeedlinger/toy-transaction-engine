@@ -22,8 +22,6 @@ mod setup;
 mod transaction;
 mod transaction_engine;
 
-const MAX_QUEUE_DEPTH: usize = 1;
-
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -51,7 +49,7 @@ async fn run(args: Args) -> Result<()> {
 
     let engine = TransactionEngine::default();
 
-    let task_pool = TaskPool::new(engine);
+    let task_pool = TaskPool::new(engine, args.queue_depth, args.workers);
 
     while let Some(line) = reader.next_line().await? {
         match CsvParser::valid_line(line) {
@@ -105,18 +103,30 @@ pub struct TaskPool {
 }
 
 impl TaskPool {
-    pub fn new(engine: TransactionEngine) -> Self {
-        let parallelism = std::thread::available_parallelism()
+    pub fn new(engine: TransactionEngine, queue_depth: usize, num_workers: isize) -> Self {
+        let system_parallelism = std::thread::available_parallelism()
             .expect("Required parallel capable environment")
-            .get()
-            - 1;
+            .get();
+
+        let parallelism = if num_workers < 0 {
+            // subtract from total available
+            std::cmp::max(1, (system_parallelism as isize) + num_workers) as usize
+        } else if num_workers == 0 {
+            // set to available
+            system_parallelism
+        } else {
+            // set to num
+            num_workers as usize
+        };
+
+        info!("Using {parallelism} engine worker threads");
 
         let mut senders = HashMap::new();
         let mut tasks = Vec::new();
         let engine = Arc::new(engine);
 
         for i in 0..(parallelism) {
-            let (sender, recv) = bounded(MAX_QUEUE_DEPTH);
+            let (sender, recv) = bounded(queue_depth);
             tasks.push(tokio::task::spawn_blocking({
                 let engine = Arc::clone(&engine);
                 move || {
