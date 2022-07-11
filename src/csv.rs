@@ -58,7 +58,7 @@ dispute,      1,        1,
     let mut parser =
         CsvParser::new(CsvParser::valid_line(String::from(lines.next().unwrap())).unwrap())
             .unwrap();
-    let transaction = parser
+    let _transaction = parser
         .line_to_transaction(CsvParser::valid_line(String::from(lines.next().unwrap())).unwrap())
         .unwrap();
 }
